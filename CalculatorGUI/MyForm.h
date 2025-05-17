@@ -75,8 +75,10 @@ namespace CalculatorGUI {
 
 	private: System::Windows::Forms::Button^ zero;
 
-	private: int first_num;
-	private: char user_action;
+	private: float first_num;
+	private: char user_action = ' ';
+	private: bool is_equal = false;
+
 
 	protected:
 
@@ -179,7 +181,7 @@ namespace CalculatorGUI {
 			this->AC->TabIndex = 2;
 			this->AC->Text = L"AC";
 			this->AC->UseVisualStyleBackColor = false;
-			this->AC->Click += gcnew System::EventHandler(this, &MyForm::MyForm_Load);
+			this->AC->Click += gcnew System::EventHandler(this, &MyForm::AC_Click);
 			// 
 			// plusds
 			// 
@@ -195,7 +197,7 @@ namespace CalculatorGUI {
 			this->plusds->TabIndex = 3;
 			this->plusds->Text = L"+/-";
 			this->plusds->UseVisualStyleBackColor = false;
-			this->plusds->Click += gcnew System::EventHandler(this, &MyForm::MyForm_Load);
+			this->plusds->Click += gcnew System::EventHandler(this, &MyForm::plusds_Click);
 			// 
 			// procent
 			// 
@@ -211,7 +213,7 @@ namespace CalculatorGUI {
 			this->procent->TabIndex = 4;
 			this->procent->Text = L"%";
 			this->procent->UseVisualStyleBackColor = false;
-			this->procent->Click += gcnew System::EventHandler(this, &MyForm::MyForm_Load);
+			this->procent->Click += gcnew System::EventHandler(this, &MyForm::procent_Click);
 			// 
 			// div
 			// 
@@ -449,8 +451,9 @@ namespace CalculatorGUI {
 			this->point->Name = L"point";
 			this->point->Size = System::Drawing::Size(65, 55);
 			this->point->TabIndex = 20;
-			this->point->Text = L".";
+			this->point->Text = L",";
 			this->point->UseVisualStyleBackColor = false;
+			this->point->Click += gcnew System::EventHandler(this, &MyForm::point_Click);
 			// 
 			// zero
 			// 
@@ -514,9 +517,11 @@ namespace CalculatorGUI {
 	}
 
 private: System::Void ButtonNumber_Click(System::Object^ sender, System::EventArgs^ e) {
+	this->Result->ForeColor = Color::White;
 	Button^ button = safe_cast<Button^>(sender);
-	if (this->Result->Text == "0") {
+	if (this->Result->Text == "0" || is_equal == true) {
 		this->Result->Text = button->Text;
+		is_equal = false;
 	}
 	else {
 		this->Result->Text = this->Result->Text + button->Text;
@@ -535,22 +540,57 @@ private: System::Void minus_Click(System::Object^ sender, System::EventArgs^ e) 
 	math_action('-');
 }
 private: System::Void math_action(char action) {
-	this->first_num = System::Convert::ToInt32(this->Result->Text);
+	this->first_num = System::Convert::ToDouble(this->Result->Text);
 	this->user_action = action;
 	this->Result->Text = "0";
 }
 
 private: System::Void equal_Click(System::Object^ sender, System::EventArgs^ e) {
-	int second = System::Convert::ToInt32(this->Result->Text);
-	int res;
+	if (user_action == ' ') {
+		return;
+	}
+	float second = System::Convert::ToDouble(this->Result->Text);
+	float res;
 	switch (this->user_action)
 	{
 	case '+':res = this->first_num + second; break;
 	case '-':res = this->first_num - second; break;
 	case '*':res = this->first_num * second; break;
-	case '/':res = this->first_num / second; break;
+	case '%':res = this->first_num * second/100; break;
+	case '/':
+		if (second == '0') {
+			res = 0;
+			this->Result->ForeColor = Color::DarkRed;
+			MessageBox::Show(this, "Действие запрещено", "Error", MessageBoxButtons::OK, MessageBoxIcon::Error);
+		}
+		else {
+		res = this->first_num / second; 
+		break;
+		}
 	}
+	this->is_equal = true;
 	this->Result->Text = System::Convert::ToString(res);
+}
+private: System::Void AC_Click(System::Object^ sender, System::EventArgs^ e) {
+	this->Result->Text = "0";
+	this->Result->ForeColor = Color::White;
+	this->first_num = 0;
+	this->user_action = ' ';
+	this->is_equal = false;
+}
+private: System::Void plusds_Click(System::Object^ sender, System::EventArgs^ e) {
+	float num = System::Convert::ToDouble(this->Result->Text);
+	num *= -1;
+	this->Result->Text = System::Convert::ToString(num);
+}	
+private: System::Void procent_Click(System::Object^ sender, System::EventArgs^ e) {
+	math_action('%');
+}
+private: System::Void point_Click(System::Object^ sender, System::EventArgs^ e) {
+	String^ text = this->Result->Text;
+	if (!text->Contains(",")) {
+	this->Result->Text = text + ",";
+	}
 }
 };
 }
